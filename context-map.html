@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="2058年，大雪山深層冷卻峽谷 - 脈絡地圖 Context Map">
+    <title>脈絡地圖 Context Map - 簡潔版</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fcfcfd;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --ring-line: #e2e8f0;
+            --panel-bg: #ffffff;
+            --panel-border: #edf2f7;
+            
+            --env-color: #38a169;
+            --tech-color: #3182ce;
+            --soc-color: #805ad5;
+            --ind-color: #dd6b20;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Noto Sans TC', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+        }
+
+        /* ----- Title & UI Header ----- */
+        .header {
+            position: absolute;
+            top: 40px;
+            left: 50px;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+        
+        .header p {
+            font-size: 14px;
+            color: var(--text-muted);
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        /* ----- Left Area: Map Container ----- */
+        .map-section {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .map-container {
+            position: relative;
+            width: 800px;
+            height: 800px;
+        }
+
+        /* ----- Right Area: Detail Panel ----- */
+        .detail-section {
+            width: 400px;
+            height: 100vh;
+            background: var(--panel-bg);
+            border-left: 1px solid var(--panel-border);
+            padding: 50px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: -4px 0 15px rgba(0,0,0,0.02);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .panel-category {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: #f7fafc;
+            color: var(--text-muted);
+        }
+
+        .panel-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+
+        .panel-desc {
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.8;
+            font-weight: 400;
+        }
+
+        .placeholder-text {
+            color: var(--text-muted);
+            font-style: italic;
+            opacity: 0.6;
+        }
+
+        /* ----- Rings ----- */
+        .ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px dashed var(--ring-line);
+            z-index: 10;
+        }
+
+        .ring-label {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-color);
+            padding: 0 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            border-radius: 20px;
+            border: 1px solid var(--ring-line);
+        }
+
+        /* Specific Rings */
+        #ring-env { width: 720px; height: 720px; border-color: rgba(56, 161, 105, 0.4); background-color: #f2fbf5; }
+        #ring-env .ring-label { color: rgba(56, 161, 105, 1); border-color: rgba(56, 161, 105, 0.4); }
+
+        #ring-tech { width: 540px; height: 540px; border-color: rgba(49, 130, 206, 0.4); background-color: #f0f8ff; }
+        #ring-tech .ring-label { color: rgba(49, 130, 206, 1); border-color: rgba(49, 130, 206, 0.4); }
+
+        #ring-soc { width: 360px; height: 360px; border-color: rgba(128, 90, 213, 0.4); background-color: #f7f4fc; }
+        #ring-soc .ring-label { color: rgba(128, 90, 213, 1); border-color: rgba(128, 90, 213, 0.4); }
+
+        #ring-ind { width: 200px; height: 200px; border-color: rgba(221, 107, 32, 0.4); background-color: #fff6e5; }
+        #ring-ind .ring-label { color: rgba(221, 107, 32, 1); border-color: rgba(221, 107, 32, 0.4); }
+
+        /* ----- Center Node ----- */
+        .center-node {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border: 1px solid var(--panel-border);
+            z-index: 50;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .center-node:hover, .center-node.active {
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+            transform: translate(-50%, -50%) scale(1.05);
+            border-color: #cbd5e0;
+        }
+
+        /* ----- Nodes ----- */
+        .nodes-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 30;
+        }
+
+        .node {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .node::before {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: currentColor;
+            transition: transform 0.2s ease;
+        }
+
+        /* Active/Hover states */
+        .node:hover::before, .node.active::before { 
+            transform: scale(1.6); 
+        }
+
+        .node::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.2s ease;
+        }
+
+        .node:hover::after, .node.active::after { 
+            opacity: 0.15; 
+            transform: scale(1.8); 
+        }
+
+        /* Node Labels (Always visible but subtle) */
+        .node-label {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-main);
+            background: rgba(255,255,255,0.85);
+            padding: 4px 8px;
+            border-radius: 4px;
+            backdrop-filter: blur(4px);
+            pointer-events: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border: 1px solid var(--panel-border);
+        }
+
+        .node:hover .node-label,
+        .node.active .node-label {
+            color: currentColor;
+            font-weight: 700;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            z-index: 40;
+        }
+
+        /* Positioning Labels */
+        .label-top { bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; }
+        .label-bottom { top: 20px; left: 50%; transform: translateX(-50%); text-align: center; }
+        .label-left { right: 20px; top: 50%; transform: translateY(-50%); text-align: right; }
+        .label-right { left: 20px; top: 50%; transform: translateY(-50%); text-align: left; }
+
+        /* Categories */
+        .node.env { color: var(--env-color); }
+        .node.tech { color: var(--tech-color); }
+        .node.soc { color: var(--soc-color); }
+        .node.ind { color: var(--ind-color); }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            bottom: 40px;
+            left: 50px;
+            display: flex;
+            gap: 20px;
+            z-index: 100;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        
+        .legend-item:hover {
+            color: var(--text-main);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        /* Mobile handling */
+        @media (max-width: 1100px) {
+            body { flex-direction: column; height: auto; overflow: auto; min-height: 100vh; }
+            .map-section { height: 800px; padding-top: 100px;}
+            .detail-section { width: 100%; height: auto; min-height: 300px; border-left: none; border-top: 1px solid var(--panel-border); }
+            .map-container { transform: scale(0.8); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <h1>脈絡地圖 Context Map</h1>
+        <p>探索 2058 年大雪山深層冷卻峽谷的環境、科技、社會與個人交互影響。點擊節點以查看詳情。</p>
+    </header>
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="legend-item" onmouseenter="highlightLayer('env')" onmouseleave="resetHighlight()"><div class="legend-dot" style="background: var(--env-color);"></div> 環境層次</div>
+        <div class="legend-item" onmouseenter="highlightLayer('tech')" onmouseleave="resetHighlight()"><div class="legend-dot" style="background: var(--tech-color);"></div> 科技層次</div>
+        <div class="legend-item" onmouseenter="highlightLayer('soc')" onmouseleave="resetHighlight()"><div class="legend-dot" style="background: var(--soc-color);"></div> 社會層次</div>
+        <div class="legend-item" onmouseenter="highlightLayer('ind')" onmouseleave="resetHighlight()"><div class="legend-dot" style="background: var(--ind-color);"></div> 個人層次</div>
+    </div>
+
+    <!-- Map Area -->
+    <div class="map-section">
+        <div class="map-container" id="map">
+            
+            <!-- Rings -->
+            <div class="ring" id="ring-env"><div class="ring-label">環境 Environment</div></div>
+            <div class="ring" id="ring-tech"><div class="ring-label">科技 Technology</div></div>
+            <div class="ring" id="ring-soc"><div class="ring-label">社會 Society</div></div>
+            <div class="ring" id="ring-ind"><div class="ring-label">個人 Individual</div></div>
+
+            <!-- Center -->
+            <div class="center-node" onclick="showCenterDetail()" id="core-node">
+                <div>2058<br>大雪山<br>冷卻峽谷</div>
+            </div>
+
+            <!-- Nodes Container generated by JS -->
+            <div class="nodes-layer" id="nodes-layer"></div>
+        </div>
+    </div>
+
+    <!-- Details Panel -->
+    <div class="detail-section">
+        <div id="detail-content">
+            <div class="panel-category" id="panel-cat" style="visibility: hidden;">分類</div>
+            <h2 class="panel-title" id="panel-title">請點擊左側地圖節點</h2>
+            <div class="panel-desc" id="panel-desc">
+                <span class="placeholder-text">透過與圖表互動，探索從環境到個人深層次的脈絡關係。</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const layersData = [
+            {
+                id: 'ind',
+                name: '個人層次',
+                color: 'var(--ind-color)',
+                bgColor: '#fffaf0',
+                radius: 100, // matches #ring-ind width/2
+                items: [
+                    { title: '感官代償高度依賴', desc: '視覺、味覺、觸覺由 ASI 演算法模擬提供。' },
+                    { title: '主體性焦慮', desc: '個體無法區辨自身感受是真實或系統模擬。' },
+                    { title: '時間通膨', desc: '預期壽命 150+，生存不再需要勞動，導致存在性真空。' },
+                    { title: '瑕疵崇拜', desc: '將徒勞、失敗與物理摩擦賦予宗教式價值。' }
+                ]
+            },
+            {
+                id: 'soc',
+                name: '社會層次',
+                color: 'var(--soc-color)',
+                bgColor: '#faf5ff',
+                radius: 180, // matches #ring-soc width/2
+                items: [
+                    { title: '神經部落化', desc: '個體投入以「品味聖戰」為核心的虛擬群體衝突。' },
+                    { title: '機魂崇拜', desc: '將量子冷卻節點陣列視為祭祀對象，祈求系統出錯。' },
+                    { title: '炫耀性時間消費', desc: '以製作時間與失敗次數作為手工物品的價值指標。' },
+                    { title: '階級消失但審美分化加劇', desc: '資源配給平均，但話語權成為新的權力場域。' }
+                ]
+            },
+            {
+                id: 'tech',
+                name: '科技層次',
+                color: 'var(--tech-color)',
+                bgColor: '#ebf8ff',
+                radius: 270, // matches #ring-tech width/2
+                items: [
+                    { title: 'ASI 全域管理', desc: '超級智能接管能源、物資、氣候與感官配給。' },
+                    { title: '物質編譯技術', desc: '核融合電力驅動的分子級閉環回收，消除物質稀缺性。' },
+                    { title: '腦機介面（BCI）', desc: '感官代償矩陣的核心硬體介面。' },
+                    { title: '量子冷卻系統', desc: '維持運作的核心散熱設施，同時成為信仰對象。' }
+                ]
+            },
+            {
+                id: 'env',
+                name: '環境層次',
+                color: 'var(--env-color)',
+                bgColor: '#f0fff4',
+                radius: 360, // matches #ring-env width/2
+                items: [
+                    { title: '地表極端高溫', desc: '攝氏 60 度地表高溫，大規模太空殖民在熱力學上不可行。' },
+                    { title: '深層冷卻峽谷', desc: '板塊穩定帶的半地下庇護結構，頂端覆蓋氣凝膠偏光天頂。' },
+                    { title: '氣候仍處修復期', desc: 'ASI 主導的大氣反射層維護，但地表生態恢復需數十年。' },
+                    { title: '系統外廢土地帶', desc: '少數拒絕系統者生存於高紫外線、高污染的地表環境。' }
+                ]
+            }
+        ];
+
+        const nodesLayer = document.getElementById('nodes-layer');
+        const detailContent = document.getElementById('detail-content');
+        const panelCat = document.getElementById('panel-cat');
+        const panelTitle = document.getElementById('panel-title');
+        const panelDesc = document.getElementById('panel-desc');
+        const coreNode = document.getElementById('core-node');
+        
+        let allNodes = [];
+
+        // Center coordinates inside 800x800 map container
+        const centerX = 400;
+        const centerY = 400;
+
+        // Angle arrays specifically tailored to spread the 16 nodes evenly without radial overlaps
+        const layerAngles = [
+            [45, 135, 225, 315],  // ind
+            [15, 105, 195, 285],  // soc
+            [75, 165, 255, 345],  // tech
+            [30, 120, 210, 300]   // env
+        ];
+
+        function renderNodes() {
+            layersData.forEach((layer, layerIdx) => {
+                const angles = layerAngles[layerIdx];
+
+                layer.items.forEach((item, itemIdx) => {
+                    const angleDeg = angles[itemIdx];
+                    const angleRad = angleDeg * (Math.PI / 180);
+
+                    // calculate x,y position from center
+                    const x = centerX + layer.radius * Math.cos(angleRad);
+                    const y = centerY + layer.radius * Math.sin(angleRad);
+
+                    const nodeEl = document.createElement('div');
+                    nodeEl.className = `node ${layer.id}`;
+                    nodeEl.style.left = `${x}px`;
+                    nodeEl.style.top = `${y}px`;
+
+                    // Position labels radiating outward away from the center based on strict quadrants
+                    let normAngle = (angleDeg % 360 + 360) % 360;
+                    let labelClass = '';
+                    if (normAngle >= 315 || normAngle <= 45) {
+                        labelClass = 'label-right';
+                    } else if (normAngle > 45 && normAngle < 135) {
+                        labelClass = 'label-bottom';
+                    } else if (normAngle >= 135 && normAngle <= 225) {
+                        labelClass = 'label-left';
+                    } else {
+                        labelClass = 'label-top';
+                    }
+
+                    const labelEl = document.createElement('div');
+                    labelEl.className = `node-label ${labelClass}`;
+                    labelEl.innerText = item.title;
+
+                    nodeEl.appendChild(labelEl);
+                    nodesLayer.appendChild(nodeEl);
+
+                    // Events
+                    nodeEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        activateNode(layer, item, nodeEl);
+                    });
+                    
+                    // Hover automatically clicks/shows
+                    nodeEl.addEventListener('mouseenter', () => activateNode(layer, item, nodeEl));
+
+                    allNodes.push({ x, y, layerId: layer.id, el: nodeEl });
+                });
+            });
+        }
+
+        function activateNode(layer, item, el) {
+            deactivateNodes();
+            coreNode.classList.remove('active');
+            
+            el.classList.add('active');
+            
+            // Update Details
+            panelCat.style.visibility = 'visible';
+            panelCat.innerText = layer.name;
+            panelCat.style.color = layer.color;
+            panelCat.style.backgroundColor = layer.bgColor;
+            
+            panelTitle.innerText = item.title;
+            panelDesc.innerText = item.desc;
+        }
+
+        function deactivateNodes() {
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+        }
+
+        function showCenterDetail() {
+            deactivateNodes();
+            coreNode.classList.add('active');
+
+            panelCat.style.visibility = 'visible';
+            panelCat.innerText = "核心場域 Core";
+            panelCat.style.color = "var(--text-main)";
+            panelCat.style.backgroundColor = "#e2e8f0";
+            
+            panelTitle.innerText = "2058年，大雪山深層冷卻峽谷";
+            panelDesc.innerText = "本脈絡地圖依個人、社會、科技、環境四個構面，梳理影響使用者行為的脈絡力量及各構面之間的相互作用關係。極端的氣候迫使人類進入庇護所，因而催生了高度管理的社會與個體層次的存在性焦慮。";
+        }
+
+        function highlightLayer(layerId) {
+            document.querySelectorAll('.node').forEach(n => {
+                if(n.classList.contains(layerId)) {
+                    n.style.opacity = '1';
+                } else {
+                    n.style.opacity = '0.2';
+                }
+            });
+            document.querySelectorAll('.ring').forEach(r => {
+                if(r.id === `ring-${layerId}`) {
+                    r.style.opacity = '1';
+                    r.style.borderStyle = 'solid';
+                } else {
+                    r.style.opacity = '0.15';
+                }
+            });
+        }
+
+        function resetHighlight() {
+            document.querySelectorAll('.node').forEach(n => {
+                n.style.opacity = '1';
+            });
+            document.querySelectorAll('.ring').forEach(r => {
+                r.style.opacity = '1';
+                r.style.borderStyle = '';
+            });
+        }
+
+        // Initialize Map
+        renderNodes();
+
+        // Show Center detailed item by default on load
+        setTimeout(() => {
+            showCenterDetail();
+        }, 300);
+
+    </script>
+</body>
+</html>
